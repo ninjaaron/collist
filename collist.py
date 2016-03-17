@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
-
-from __future__ import unicode_literals
 import subprocess as sp
+import click
 
-def collist(strlist, divider='  ', cols=None):
+def collist(strlist, divider='  ', cols=0):
     '''
     takes a list of strings and prints it as a list of columns that fit the
-    terminal width
+    terminal width (or a specified number of columns, with the `cols`
+    parameter.
     '''
     strlist = [s.rstrip() for s in strlist]
     width = int(sp.check_output(['tput', 'cols']))
@@ -28,20 +27,26 @@ def collist(strlist, divider='  ', cols=None):
     for row, head in enumerate(cols[0]):
         for n, col in enumerate(cols):
             if n == 0:
-                table += '\n{0:{1}}'.format(head, tabs)
+                table += u'\n{0:{1}}'.format(head, tabs)
             else:
                 try:
-                    table += '{0}{1:{2}}'.format(divider, col[row], tabs)
+                    table += u'{0}{1:{2}}'.format(divider, col[row], tabs)
                 except IndexError:
                     pass
     table = '\n'.join(table.splitlines()[1:])
     print(table.expandtabs(tabs + len(divider)))
 
 
-def main():
+@click.command()
+@click.option('-n', default=0, help='number of columns')
+@click.option('-d', default='  ',
+        help='column seperator. defaults to two spaces')
+@click.argument('filename', required=False)
+def main(filename, n, d):
+    '''columnate lines from a file or stdin'''
     import sys
-    f = open(sys.argv[1]) if sys.argv[1:2] else sys.stdin
+    f = open(filename) if filename else sys.stdin
     lines = f.readlines()
     if isinstance(lines[0], bytes):
         lines = [l.decode('UTF-8') for l in lines]
-    collist(lines)
+    collist(lines, divider=d, cols=n)

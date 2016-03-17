@@ -1,3 +1,4 @@
 collist.egg-info
 venv
 dist
+.*\.pyc
