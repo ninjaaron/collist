@@ -8,6 +8,9 @@ def collist(strlist, divider='  ', cols=0):
     parameter.
     '''
     strlist = [s.rstrip() for s in strlist]
+    if len(strlist) == 0:
+            click.echo('no items', err=True)
+        exit(1)
     width = int(sp.check_output(['tput', 'cols']))
     longest = 0
     for string in strlist:
