@@ -34,19 +34,17 @@ def collist(strlist, divider='  ', cols=0):
                 except IndexError:
                     pass
     table = '\n'.join(table.splitlines()[1:])
-    print(table.expandtabs(tabs + len(divider)))
+    click.echo(table.expandtabs(tabs + len(divider)))
 
 
 @click.command()
 @click.option('-n', default=0, help='number of columns')
 @click.option('-d', default='  ',
         help='column seperator. defaults to two spaces')
-@click.argument('filename', required=False)
+@click.argument('filename', type=click.File('r'), default='-')
 def main(filename, n, d):
     '''columnate lines from a file or stdin'''
-    import sys
-    f = open(filename) if filename else sys.stdin
-    lines = f.readlines()
+    lines = filename.readlines()
     if isinstance(lines[0], bytes):
         lines = [l.decode('UTF-8') for l in lines]
     collist(lines, divider=d, cols=n)
