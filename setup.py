@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='collist',
-    version='0.1',
+    version='0.2',
     py_modules=['collist'],
     install_requires=['click'],
     long_description=open('README.rst').read(),
