@@ -18,6 +18,12 @@ def displayhook(value):
         builtins._ = None
     except:
         pass
+    try:
+        import pyedpiper.generic
+    except ImportError:
+        pass
+    else:
+        value = value.state
     if isinstance(value, (list, dict, set, tuple)):
         try:
            text = representation(value)
@@ -62,7 +68,7 @@ def collist(iterable, divider=u'  ', cols=0):
     '''
     strlist = iterable
     if isinstance(strlist, dict):
-        strlist = [u'{}: {}'.format(k, v) for k, v in strlist.items()]
+        strlist = (u'{}: {}'.format(k, v) for k, v in strlist.items())
     strlist = [str(s).rstrip() for s in strlist]
     width, totalcols, col_len, tabs = _get_table_size(strlist, divider, cols)
     if not cols:

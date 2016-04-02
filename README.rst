@@ -1,12 +1,11 @@
 collist
 =======
-``collist`` is a simple module with only one primary function:
+``collist`` is a simple module which provides the function
 ``collist()``, the single purpose of which is to columnate lists of
 output for printing to the terminal. It is very much like the unix
 command ``column``, but it works on python iterables. This package also
-exports the command ``cols`` which is similar to ``column``, but with
-fewer features and works better (on my system), though it has fewer
-options; see ``cols --help``.
+exports the command ``cols`` which is similar to ``column`` but works
+better (on my system), though it has fewer options; see ``cols --help``.
 
 The program uses the ``tput`` command internally, and therefore will not
 work with Windows and other strange, non-POSIX operation systems.
