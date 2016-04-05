@@ -8,6 +8,11 @@ except ImportError:
     pass
 import collections
 import click
+try:
+    from pyedpiper.generic import Generic
+except ImportError:
+    class Generic:
+        pass
 
 
 def displayhook(value):
@@ -18,11 +23,7 @@ def displayhook(value):
         builtins._ = None
     except:
         pass
-    try:
-        import pyedpiper.generic
-    except ImportError:
-        pass
-    else:
+    if isinstance(value, Generic):
         value = value.state
     if isinstance(value, (list, dict, set, tuple)):
         try:
@@ -97,7 +98,7 @@ def representation(iterable):
     '''
     '''
     cols = 0
-    if isinstance(strlist, dict):
+    if isinstance(iterable, dict):
         strlist = [u'{}: {}'.format(repr(k), repr(v)) + u','
                    for k, v in iterable.items()]
         divchar = u'{}'
