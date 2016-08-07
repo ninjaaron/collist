@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # coding = UTF-8
 import sys
 import subprocess as sp
@@ -9,21 +10,21 @@ except ImportError:
 import collections
 import click
 try:
-    from pyedpiper.generic import Generic
+    from pyedpiper import Stream
 except ImportError:
-    class Generic:
+    class Stream:
         pass
 
 
 def displayhook(value):
-    if value is None:
+    if value is None or repr(value) == 'None':
        return
     # Set '_' to None to avoid recursion
     try:
         builtins._ = None
     except:
         pass
-    if isinstance(value, Generic):
+    if isinstance(value, Stream):
         value = value.state
     if isinstance(value, (list, dict, set, tuple)):
         try:
@@ -49,12 +50,15 @@ def displayhook(value):
 
 
 def _get_table_size(strlist, divider=u' ', cols=0):
-    if len(strlist) == 0:
-        click.echo('no items', err=True)
     width = int(sp.check_output(['tput', 'cols']))
-    tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist))
+    tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist), 0)
     totalcols = cols if cols else width // (tabs + len(divider))
-    col_len, remainder = divmod(len(strlist),  totalcols)
+    try:
+        col_len, remainder = divmod(len(strlist), totalcols)
+    except ZeroDivisionError:
+        for i in strlist:
+            print(i)
+        exit()
     if remainder != 0:
         col_len += 1
     return width, totalcols, col_len, tabs
@@ -104,9 +108,12 @@ def representation(iterable):
         divchar = u'{}'
     else:
         strlist = [s.__repr__() + u',' for s in iterable]
-        divchar = u'[]' if isinstance(strlist ,list) else u'()'
-        divchar = u'{}' if isinstance(strlist, set) else divchar
-    width, totalcols, col_len, tabs = _get_table_size(strlist)
+        divchar = u'[]' if isinstance(iterable, list) else u'()'
+        divchar = u'{}' if isinstance(iterable, set) else divchar
+    try:
+        width, totalcols, col_len, tabs = _get_table_size(strlist)
+    except TypeError:
+        return divchar
     if len(repr(iterable)) <= width:
         return repr(iterable)
     width = width - 1
@@ -133,4 +140,7 @@ def main(filename, c, d):
     lines = filename.readlines()
     if isinstance(lines[0], bytes):
         lines = [l.decode('UTF-8') for l in lines]
-    click.echo(collist(lines, divider=d, cols=n))
+    click.echo(collist(lines, divider=d, cols=c))
+
+if __name__ == '__main__':
+    main()
