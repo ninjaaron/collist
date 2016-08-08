@@ -1,6 +1,7 @@
+syntax: glob
 collist.egg-info
 venv
 dist
-.*\.whl
+*.whl
 __pycache__
-.*\.pyc
+*.pyc
