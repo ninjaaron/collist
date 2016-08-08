@@ -11,7 +11,7 @@ exec(fastep.read(), namespace)
 
 setup(
     name='collist',
-    version='0.4',
+    version='0.5',
     py_modules=['collist'],
     install_requires=['click'],
     long_description=open('README.rst').read(),
