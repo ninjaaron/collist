@@ -2,6 +2,7 @@
 # coding = UTF-8
 import sys
 import subprocess as sp
+import pprint
 from functools import reduce
 try:
     import builtins
@@ -53,6 +54,8 @@ def _get_table_size(strlist, divider=u' ', cols=0):
     width = int(sp.check_output(['tput', 'cols']))
     tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist), 0)
     totalcols = cols if cols else width // (tabs + len(divider))
+    if not totalcols:
+        totalcols = 1
     col_len, remainder = divmod(len(strlist), totalcols)
     if remainder != 0:
         col_len += 1
@@ -71,6 +74,8 @@ def collist(iterable, divider=u'  ', cols=0):
         strlist = (u'{}: {}'.format(k, v) for k, v in strlist.items())
     strlist = [str(s).rstrip() for s in strlist]
     width, totalcols, col_len, tabs = _get_table_size(strlist, divider, cols)
+    if totalcols == 1:
+        return '\n'.join(strlist)
     if not cols:
         short_list = divider.join(strlist)
         if len(short_list) <= width:
@@ -94,7 +99,8 @@ def collist(iterable, divider=u'  ', cols=0):
 
 
 def representation(iterable):
-    '''
+    '''print a columnated representation of a python literal. falls back to
+    pprint.pformat values at the top level are too long for the terminal.
     '''
     cols = 0
     if isinstance(iterable, dict):
@@ -111,6 +117,8 @@ def representation(iterable):
         return divchar
     if len(repr(iterable)) <= width:
         return repr(iterable)
+    elif totalcols == 1:
+        return pprint.pformat(iterable)
     width = width - 1
     rows = [strlist[n*totalcols:(n+1)*totalcols] for n in range(col_len)]
     table = []
