@@ -1,5 +1,5 @@
 collist.egg-info
-venv
+venv*
 dist
 .*\.whl
 __pycache__
