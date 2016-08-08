@@ -53,12 +53,7 @@ def _get_table_size(strlist, divider=u' ', cols=0):
     width = int(sp.check_output(['tput', 'cols']))
     tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist), 0)
     totalcols = cols if cols else width // (tabs + len(divider))
-    try:
-        col_len, remainder = divmod(len(strlist), totalcols)
-    except ZeroDivisionError:
-        for i in strlist:
-            print(i)
-        exit()
+    col_len, remainder = divmod(len(strlist), totalcols)
     if remainder != 0:
         col_len += 1
     return width, totalcols, col_len, tabs
