@@ -133,8 +133,6 @@ def representation(iterable):
 def main(filename, c, d):
     '''columnate lines from a file or stdin'''
     lines = filename.readlines()
-    if isinstance(lines[0], bytes):
-        lines = [l.decode('UTF-8') for l in lines]
     click.echo(collist(lines, divider=d, cols=c))
 
 if __name__ == '__main__':
