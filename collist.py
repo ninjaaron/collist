@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding = UTF-8
 import sys
+import io
 import subprocess as sp
 import pprint
 from functools import reduce
@@ -9,12 +10,6 @@ try:
 except ImportError:
     pass
 import collections
-import click
-try:
-    from pyedpiper import Stream
-except ImportError:
-    class Stream:
-        pass
 
 
 def displayhook(value):
@@ -25,8 +20,6 @@ def displayhook(value):
         builtins._ = None
     except:
         pass
-    if isinstance(value, Stream):
-        value = value.state
     if isinstance(value, (list, dict, set, tuple)):
         try:
            text = representation(value)
@@ -53,7 +46,7 @@ def displayhook(value):
 def _get_table_size(strlist, divider=u' ', cols=0):
     width = int(sp.check_output(['tput', 'cols']))
     tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist), 0)
-    totalcols = cols if cols else width // (tabs + len(divider))
+    totalcols = cols or width // (tabs + len(divider))
     if not totalcols:
         totalcols = 1
     col_len, remainder = divmod(len(strlist), totalcols)
@@ -133,15 +126,17 @@ def representation(iterable):
     return table
 
 
-@click.command()
-@click.option('-c', default=0, help='number of columns')
-@click.option('-d', default='  ',
-        help='column seperator. defaults to two spaces')
-@click.argument('filename', type=click.File('r'), default='-')
-def main(filename, c, d):
+def main():
     '''columnate lines from a file or stdin'''
-    lines = filename.readlines()
-    click.echo(collist(lines, divider=d, cols=c))
+    import argparse
+    prs = argparse.ArgumentParser()
+    prs.add_argument('-c', '--columns', default=0, help='number of columns')
+    prs.add_argument('-d', '--divider', default='  ',
+                     help='defaults to two spaces')
+    prs.add_argument('file', default=io.open(0), type=io.open, nargs='?')
+    args = prs.parse_args()
+    lines = args.file.readlines()
+    print(collist(lines, divider=args.divider, cols=args.columns))
 
 if __name__ == '__main__':
     main()
