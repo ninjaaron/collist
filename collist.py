@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # coding = UTF-8
 import sys
+import os
 import io
-import subprocess as sp
 import pprint
 from functools import reduce
 try:
@@ -44,7 +44,7 @@ def displayhook(value):
 
 
 def _get_table_size(strlist, divider=u' ', cols=0):
-    width = int(sp.check_output(['tput', 'cols']))
+    width = os.get_terminal_size().columns
     tabs = reduce(lambda x, y: x if x > y else y, map(len, strlist), 0)
     totalcols = cols or width // (tabs + len(divider))
     if not totalcols:
