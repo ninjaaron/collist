@@ -11,9 +11,8 @@ exec(fastep.read(), namespace)
 
 setup(
     name='collist',
-    version='0.5',
+    version='0.6',
     py_modules=['collist'],
-    install_requires=['click'],
     long_description=open('README.rst').read(),
     url='https://github.com/ninjaaron/collist',
     author='Aaron Christianson',
