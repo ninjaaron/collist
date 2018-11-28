@@ -155,25 +155,24 @@ class Columns(compose.Struct):
             columns = columns.split(ncols)
 
         # see if we can scrunch the columns without making the table longer
-        columns = scrunch(columns)
+        columns = columns.scrunch()
         return columns.getrows(pad)
 
+    def scrunch(columns):
+        height = columns.height()
+        bottomrow = [i for i in crossection(columns, height - 1) if i is not null]
+        freespots = len(columns) - len(bottomrow)
 
-def scrunch(columns):
-    height = columns.height()
-    bottomrow = [i for i in crossection(columns, height - 1) if i is not null]
-    freespots = len(columns) - len(bottomrow)
-
-    moved = 0
-    for i, col in enumerate(reversed(columns)):
-        moved += len(col)
-        if moved > freespots - 1:
-            break
-        freespots -= len(col)
-    columns = columns.split(len(columns) - i)
-    if columns.height() > height:
-        columns = columns.split(len(columns) + 1)
-    return columns
+        moved = 0
+        for i, col in enumerate(reversed(columns)):
+            moved += len(col)
+            if moved > freespots - 1:
+                break
+            freespots -= len(col)
+        columns = columns.split(len(columns) - i)
+        if columns.height() > height:
+            columns = columns.split(len(columns) + 1)
+        return columns
 
 
 def main():
