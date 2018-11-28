@@ -1,0 +1,14 @@
+[[package]]
+category = "main"
+description = "yet another namedtuple alternative"
+name = "compose-struct"
+optional = false
+python-versions = ">=3.5"
+version = "0.7.5"
+
+[metadata]
+content-hash = "019e5128b8c22396cc6f72ee46003da63122179dbc437dad48349fc83b9430a8"
+python-versions = "^3.5"
+
+[metadata.hashes]
+compose-struct = ["48596f458980940cf577dc395ad8b861e13632dc83697c37a57225561dc962e0", "ea1d5ff244e7d1b902bc3ce9c317df59fbafa208ea17ae9027c3d7bef73359bb"]
