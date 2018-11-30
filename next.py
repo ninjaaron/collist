@@ -6,7 +6,7 @@ import sys
 import typing as t
 
 
-class SliceView(compose.Struct):
+class Slice(compose.Struct):
     data: t.Sequence
     start: int
     stop: int
@@ -47,7 +47,7 @@ class SliceView(compose.Struct):
     def __len__(self):
         return self.stop - self.start
 
-    def cut(self, index: int) -> t.Tuple["SliceView", "SliceView"]:
+    def cut(self, index: int) -> t.Tuple["Slice", "Slice"]:
         return self[:index], self[index:]
 
     def chunk(self, chunksize: int):
@@ -60,23 +60,27 @@ class SliceView(compose.Struct):
                 yield end
                 break
 
-    def split(self, numitems=2):
+    def split(self, numitems: int = 2) -> t.List["Slice"]:
+        new = []
         chunksize, remainder = divmod(len(self), numitems)
         end = self
         for i in range(remainder):
             start, end = end.cut(chunksize + 1)
-            yield start
-        yield from end.chunk(chunksize)
+            new.append(start)
+        new.extend(end.chunk(chunksize))
+        return new
 
     def __repr__(self):
-        return "{}<{!r}>".format(type(self).__name__, self.data[self.start : self.stop])
+        name = type(self).__name__
+        copy = self.data[self.start : self.stop]
+        return "{}<{!r}>".format(name, copy)
 
     def __iter__(self):
         for i in range(self.start, self.stop):
             yield self.data[i]
 
 
-class Column(SliceView):
+class Column(Slice):
     __slots__ = ()
     data: t.Sequence[str]
 
@@ -84,14 +88,23 @@ class Column(SliceView):
     def width(self) -> int:
         return max(map(len, self))
 
+    def widthasrow(self, pad="") -> int:
+        return sum(len(i) for i in self.data) + (len(self.data) - 1) * len(pad)
+
+    @classmethod
+    def new(cls, data, *args, **kwargs):
+        if not isinstance(data, t.Sequence):
+            data = tuple(data)
+        return super().new(data, *args, **kwargs)
+
 
 null = object()
 
 
-def crossection(matrix: t.Iterable[t.Iterable], index: int):
-    for array in matrix:
+def crossection(matrix: t.Sequence[t.Sequence], index: int):
+    for sequence in matrix:
         try:
-            yield array[index]
+            yield sequence[index]
         except IndexError:
             yield null
 
@@ -101,10 +114,7 @@ class Columns(compose.Struct):
 
     @classmethod
     def new(cls, iterable: t.Iterable, ncols=1):
-        if not isinstance(iterable, t.Sequence):
-            iterable = list(iterable)
-        cols = Column.new(iterable).split(ncols)
-        return cls(list(cols))
+        return cls(Column.new(iterable).split(ncols))
 
     @classmethod
     def fromdict(cls, mapping: t.Mapping, ncols=1):
@@ -112,7 +122,7 @@ class Columns(compose.Struct):
         return cls.new(iterable, ncols)
 
     @property
-    def items(self):
+    def items(self) -> t.Sequence[str]:
         return self[0].data
 
     def split(self, ncols=1):
@@ -130,7 +140,7 @@ class Columns(compose.Struct):
     def getrows(self, pad=""):
         widths = [c.width for c in self]
         for i in range(len(self[0])):
-            yield pad.join(self.getrow(i, widths))
+            yield pad.join(self.getrow(i, widths)).rstrip()
 
     def width(self, pad=""):
         return sum(col.width for col in self) + (len(self) - 1) * len(pad)
@@ -138,48 +148,57 @@ class Columns(compose.Struct):
     def height(self):
         return len(self[0])
 
-    def fitwidth(self, width, pad):
-        # see if it fits on one line
-        onerow = self.chunk(1)
-        if onerow.width(pad) < width:
-            return onerow.getrows(pad)
-        del onerow
-        colwidth = self.width()
-        ncols = width // colwidth
-
-        # see if an extra column can fit
-        ncols += 1
-        columns = self.split(ncols)
-        while columns.width(pad) > width:
-            ncols -= 1
-            columns = columns.split(ncols)
-
-        # see if we can scrunch the columns without making the table longer
-        columns = columns.scrunch()
-        return columns.getrows(pad)
-
-    def scrunch(columns):
-        height = columns.height()
-        bottomrow = [i for i in crossection(columns, height - 1) if i is not null]
-        freespots = len(columns) - len(bottomrow)
+    def scrunch(self):
+        height = self.height()
+        bottomrow = [i for i in crossection(self, height - 1) if i is not null]
+        freespots = len(self) - len(bottomrow)
 
         moved = 0
-        for i, col in enumerate(reversed(columns)):
+        for i, col in enumerate(reversed(self)):
             moved += len(col)
             if moved > freespots - 1:
                 break
             freespots -= len(col)
-        columns = columns.split(len(columns) - i)
+        columns = self.split(len(self) - i)
         if columns.height() > height:
             columns = columns.split(len(columns) + 1)
         return columns
 
+    def fill(self, width: int, pad: str, grow=True):
+        cw = self.width(pad)
+        ncols = len(self)
+        if cw > width and cw > 1:
+            return self.split(ncols - 1).fill(width, pad, False)
+        elif cw < width and grow:
+            return self.split(ncols + 1).fill(width, pad)
+        else:
+            return self
+
+
+def fill(iterable, width, pad):
+    column = Column.new(iterable)
+    if column.widthasrow(pad) <= width:
+        return (pad.join(column.data),)
+    ncols = width // column.width
+    if ncols == 0:
+        return column.data
+    columns = Columns(column.split(ncols)).fill(width, pad).scrunch()
+    return columns.getrows(pad)
+
+
+def center(rows, width):
+    rows = tuple(rows)
+    maxrow = max(map(len, rows))
+    prepad = " " * ((width - maxrow) // 2)
+    for row in rows:
+        yield prepad + row
+
 
 def main():
     pad = "  "
-    columns = Columns.new(sys.stdin.read().splitlines())
     twidth, _ = os.get_terminal_size()
-    print(*columns.fitwidth(twidth, pad), sep="\n")
+    rows = fill(sys.stdin.read().splitlines(), twidth, pad)
+    print(*rows, sep="\n")
 
 
 if __name__ == "__main__":
